@@ -1,0 +1,95 @@
+async function buscarDadosServidor() {
+    try {
+        const resposta = await fetch("https://popfi.online/popfi-player/json/nowplaying.json");
+        const dados = await resposta.json();
+        return dados;
+    } catch (erro) {
+        console.error("❌ Erro ao buscar dados:", erro);
+        return null;
+    }
+}
+
+function salvarNoLocalStorage(dados) {
+    localStorage.setItem('dadosMusica', JSON.stringify(dados));
+    console.log("🎵 Dados salvos no localStorage:", dados);
+    updateDetalhadoAll();
+
+    // 🔔 Disparar evento personalizado para notificar os widgets
+    const evento = new CustomEvent("atualizacaoMusica", { detail: dados });
+    window.dispatchEvent(evento);
+}
+
+function getHoraTimestamp(horaString) {
+    return new Date(horaString.replace(" ", "T")).getTime();
+}
+
+function updateDetalhadoAll() {
+    const dados = localStorage.getItem('dadosMusica');
+    if (dados) {
+        const data = JSON.parse(dados);
+        const containers = document.querySelectorAll('.detalhadoContainer');
+        containers.forEach(container => {
+            const tituloEl = container.querySelector('.titulo');
+            const artistaEl = container.querySelector('.artista');
+            const albumEl = container.querySelector('.album');
+            const anoEl = container.querySelector('.ano');
+            const capaEl = container.querySelector('.capa');
+
+            if (tituloEl) tituloEl.innerText = data.detalhado.titulo;
+            if (artistaEl) artistaEl.innerText = data.detalhado.artista;
+            if (albumEl) albumEl.innerText = data.detalhado.album || 'Desconhecido';
+            if (anoEl) anoEl.innerText = data.detalhado.ano || 'Desconhecido';
+            if (capaEl) capaEl.src = data.detalhado.capa;
+        });
+    }
+}
+
+function dadosSaoIguais(d1, d2) {
+    return JSON.stringify(d1.detalhado) === JSON.stringify(d2.detalhado);
+}
+
+async function iniciarCicloAtualizacao() {
+    const dadosAtuais = await buscarDadosServidor();
+    if (!dadosAtuais) return;
+
+    salvarNoLocalStorage(dadosAtuais);
+
+    const duracao = dadosAtuais.detalhado.duracao * 1000;
+    const horaGeracao = getHoraTimestamp(dadosAtuais.detalhado.hora_geracao);
+    const agora = Date.now();
+    const tempoRestante = (horaGeracao + duracao) - agora;
+
+    if (tempoRestante > 0) {
+        console.log(`⌛ Aguardando ${Math.ceil(tempoRestante / 1000)}s até a próxima verificação...`);
+        setTimeout(() => esperarMudanca(dadosAtuais), tempoRestante);
+    } else {
+        console.log("🔁 Música já deve ter mudado, iniciando verificações imediatas...");
+        esperarMudanca(dadosAtuais);
+    }
+}
+
+async function esperarMudanca(dadosAntigos) {
+    const NOVO_INTERVALO = 5000;
+
+    const novaTentativa = async () => {
+        const novosDados = await buscarDadosServidor();
+        if (!novosDados) {
+            setTimeout(novaTentativa, NOVO_INTERVALO);
+            return;
+        }
+
+        if (!dadosSaoIguais(dadosAntigos, novosDados)) {
+            console.log("✅ Música alterada! Atualizando localStorage e notificando widgets.");
+            salvarNoLocalStorage(novosDados);
+            iniciarCicloAtualizacao();
+        } else {
+            console.log("🕒 Música ainda é a mesma. Verificando novamente em 5s...");
+            setTimeout(novaTentativa, NOVO_INTERVALO);
+        }
+    };
+
+    novaTentativa();
+}
+
+// 🚀 Início do processo
+iniciarCicloAtualizacao();
