@@ -1,164 +1,216 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Player Detalhado 2M com Biografias Dinâmicas</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PopFi Radio</title>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      background-color: #343541; 
-      color: #d1d5db; 
-      margin: 0; 
-      padding: 0; 
+    /* Header com fundo sólido e margens laterais de 50px */
+    .barra-topo-fixa {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #2c2c2c;
+      padding: 10px 50px;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-    .player-footer { 
-      width: 100%; 
-      background-color: #000; 
-      padding: 10px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between; 
-      height: 100px; 
-      position: relative; 
+    .header-left, .header-center, .header-right {
+      display: flex;
+      align-items: center;
     }
-    .logo { 
-      height: 100%; 
-      margin-right: 15px; 
+    .header-left {
+      flex: 0 0 auto;
     }
-    .player-controls { 
-      display: flex; 
-      gap: 15px; 
-      height: 100%; 
-      position: relative; 
+    .header-center {
+      flex: 1;
     }
-    .icon { 
-      height: 100%; 
-      aspect-ratio: 1/1; 
-      cursor: pointer; 
-      transition: transform 0.2s; 
+    .header-right {
+      flex: 0 0 auto;
+      margin-right: 20px;
     }
-    .icon:hover { 
-      transform: scale(1.1); 
+    .header-right a {
+      margin-left: 20px;
+      font-weight: bold;
+      color: #fff;
+      text-decoration: none;
     }
-    .text { 
-      flex-grow: 1; 
-      text-align: center; 
-      padding: 0 15px; 
+    .header-right a:hover {
+      text-decoration: underline;
     }
-    .titulo { 
-      font-size: 18px; 
-      font-weight: bold; 
-      color: #fff; 
-      margin: 0; 
+    /* Container do player: 100px de altura, alinhamento na borda inferior */
+    .player {
+      display: flex;
+      align-items: flex-end; /* Todos os itens alinhados na parte inferior */
+      gap: 15px;
+      height: 100px;
     }
-    .artista { 
-      font-size: 16px; 
-      color: #9ca3af; 
-      margin: 0; 
+    .logo {
+      height: 100%;
+      margin-right: 15px;
+      object-fit: contain;
     }
-    .cover { 
-      height: 100%; 
-      aspect-ratio: 1/1; 
-      border-radius: 5px; 
-      object-fit: cover; 
-      background-color: #50515f; 
-      cursor: pointer; 
+    .player-controls {
+      display: flex;
+      gap: 15px;
+      height: 100%;
+      position: relative;
     }
-    .modal { 
-      display: none; 
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      width: 100%; 
-      height: 100%; 
-      background-color: rgba(0, 0, 0, 0.8); 
-      justify-content: center; 
-      align-items: center; 
-      z-index: 1000; 
+    .icon {
+      height: 100%;
+      aspect-ratio: 1/1;
+      cursor: pointer;
+      transition: transform 0.2s;
     }
-    .modal-content { 
-      background-color: #333; 
-      color: #fff; 
-      padding: 20px; 
-      border-radius: 10px; 
-      text-align: center; 
-      width: 90%; 
-      max-width: 700px; 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
+    .icon:hover {
+      transform: scale(1.1);
     }
-    .modal img { 
-      width: auto; 
-      height: auto; 
-      max-height: 60vh; 
-      border-radius: 10px; 
-      margin-bottom: 20px; 
+    .text {
+      text-align: center;
+      padding: 0 15px;
+      /* Removemos alinhamento específico para que herde do container */
     }
-    .close { 
-      position: absolute; 
-      top: 20px; 
-      right: 20px; 
-      font-size: 30px; 
-      color: white; 
-      cursor: pointer; 
+    .titulo {
+      font-size: 18px;
+      font-weight: bold;
+      margin: 0;
+      color: #fff;
     }
-    .volume-container { 
-      display: none; 
-      position: absolute; 
-      top: 100%; 
-      left: 50%; 
-      transform: translateX(-50%); 
-      background-color: #50515f; 
-      padding: 5px; 
-      border-radius: 5px; 
-      z-index: 10; 
+    .artista {
+      font-size: 16px;
+      margin: 0;
+      color: #ccc;
     }
-    .biografia { 
-      margin-top: 20px; 
-      white-space: pre-wrap; 
-      max-height: 300px; 
-      overflow-y: auto; 
-      font-size: 14px; 
-      text-align: left; 
+    /* A capa tem 100px x 100px e é alinhada na borda inferior do container */
+    .cover {
+      height: 100px;
+      width: 100px;
+      border-radius: 5px;
+      object-fit: cover;
+      object-position: center;
+      background-color: #50515f;
+      cursor: pointer;
+      display: block;
+      margin: 0;
+      /* Sem margin-top para que toque a borda inferior */
+      /* E sem transform ou alinhamento extra */
     }
-    .btn-bio { 
-      background: #444; 
-      color: #fff; 
-      border: none; 
-      padding: 8px 16px; 
-      margin: 5px; 
-      cursor: pointer; 
-      border-radius: 5px; 
+    /* Conteúdo com margens laterais de 50px */
+    #conteudo {
+      margin-top: 140px;
+      padding: 20px 50px;
     }
-    .btn-bio:hover { 
-      background: #666; 
+    /* Modal (mesmos estilos) */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.8);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      position: relative;
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      width: 90%;
+      max-width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 30px;
+      color: white;
+      cursor: pointer;
+    }
+    .volume-container {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #50515f;
+      padding: 5px;
+      border-radius: 5px;
+      z-index: 10;
+    }
+    .biografia {
+      margin-top: 20px;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 14px;
+      text-align: left;
+    }
+    .btn-bio {
+      background: #444;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .btn-bio:hover {
+      background: #666;
+    }
+    /* Efeito de zoom ao passar o mouse (igual aos botões) */
+    .cover:hover {
+      transform: scale(1.1);
+      transition: transform 0.2s;
     }
   </style>
 </head>
 <body>
-
-  <div class="player-footer detalhadoContainer">
-    <!-- Logo posicionada à esquerda com margem de 15px à direita -->
-    <img src="https://popfi.online/wp-content/uploads/2025/03/text1970-4-8-89-9-7.png" class="logo">
-    <div class="player-controls">
-      <img src="https://popfi.online/popfi-player/player/q.arrow1.webp" class="icon" id="playPause" onclick="togglePlay()">
-      <img src="https://popfi.online/popfi-player/player/q.volume100.webp" class="icon" id="volumeIcon" onclick="toggleVolumeSlider()">
-      <div class="volume-container" id="volumeContainer">
-        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" onchange="atualizarVolume(this.value)">
+  <div id="header" class="barra-topo-fixa">
+    <div class="header-left">
+      <div class="player">
+        <!-- Nova logo -->
+        <img src="https://popfi.online/wp-content/uploads/2025/03/POPFI-LOGO-COM-PALETA-300.png" class="logo">
+        <div class="player-controls">
+          <img src="https://popfi.online/popfi-player/player/q.arrow1.webp" class="icon" id="playPause" onclick="togglePlay()">
+          <img src="https://popfi.online/popfi-player/player/q.volume100.webp" class="icon" id="volumeIcon" onclick="toggleVolumeSlider()">
+          <div class="volume-container" id="volumeContainer">
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" onchange="atualizarVolume(this.value)">
+          </div>
+        </div>
+        <div class="text">
+          <p class="titulo" id="play_titulo">Carregando...</p>
+          <p class="artista" id="play_artista">Carregando...</p>
+        </div>
+        <img decoding="async" src="https://popfi.online/popfi-player/covers/Anne-Marie,Little Mix - Kiss My (Uh Oh).webp" class="cover capa" id="play_capa" onclick="abrirModal()" data-album="Therapy" data-ano="2021">
       </div>
     </div>
-    <div class="text">
-      <p class="titulo" id="play_titulo">Carregando...</p>
-      <p class="artista" id="play_artista">Carregando...</p>
-    </div>
-    <img src="placeholder.jpg" class="cover capa" id="play_capa" onclick="abrirModal()" data-album="" data-ano="">
+    <div class="header-center"></div>
+    <nav class="header-right">
+      <a href="/pagina1" class="link-pajax">Página 1</a>
+      <a href="/pagina2" class="link-pajax">Página 2</a>
+    </nav>
   </div>
 
+  <div id="conteudo">
+    <h2>Bem-vindo à PopFi</h2>
+    <p>Esta é a tela principal. Clique nos links acima para navegar sem recarregar a barra.</p>
+  </div>
+
+  <script src="/wp-content/themes/popfi/assets/js/unminified/pajax.js"></script>
+  <audio id="audio" src="https://cast3.midiazdx.com.br:7154/;stream.mp3"></audio>
   <div class="modal" id="modal">
-    <span class="close" onclick="fecharModal()">&times;</span>
     <div class="modal-content">
+      <span class="close" onclick="fecharModal()">&times;</span>
       <img id="modalImg">
       <p id="modalTitulo">Título: Carregando...</p>
       <p id="modalArtista">Artista: Carregando...</p>
@@ -168,8 +220,6 @@
       <div class="biografia" id="modalBiografia">Biografia não carregada.</div>
     </div>
   </div>
-
-  <audio id="audio" src="https://cast3.midiazdx.com.br:7154/;stream.mp3"></audio>
 
   <script>
     const audio = document.getElementById("audio");
@@ -210,7 +260,6 @@
       const dados = localStorage.getItem('dadosMusica');
       if (!dados) return;
       const data = JSON.parse(dados);
-
       document.getElementById("play_titulo").innerText = data.detalhado.titulo;
       document.getElementById("play_artista").innerText = data.detalhado.artista;
       const capa = document.getElementById("play_capa");
@@ -225,7 +274,6 @@
       const capa = document.getElementById("play_capa").src || "placeholder.jpg";
       const album = document.getElementById("play_capa").dataset.album || "Desconhecido";
       const ano = document.getElementById("play_capa").dataset.ano || "Desconhecido";
-
       document.getElementById("modal").style.display = "flex";
       document.getElementById("modalImg").src = capa;
       document.getElementById("modalTitulo").innerText = "Título: " + titulo;
@@ -243,7 +291,6 @@
     function gerarBotoesArtistas(nome) {
       const container = document.getElementById("botoesArtistas");
       container.innerHTML = "";
-
       const artistas = nome.split(/\s*(?:\/|,|&| e | feat\.?)\s*/i).filter(Boolean);
       artistas.forEach(nome => {
         const btn = document.createElement("button");
@@ -255,13 +302,9 @@
     }
 
     async function buscarBiografia(nome) {
-      const nomeFormatado = nome
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-zA-Z0-9 ]/g, "").trim();
-
+      const nomeFormatado = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9 ]/g, "").trim();
       const url = `https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(nomeFormatado)}`;
       document.getElementById("modalBiografia").innerText = `🔍 Buscando biografia de ${nome}...`;
-
       try {
         const resp = await fetch(url);
         const data = await resp.json();
